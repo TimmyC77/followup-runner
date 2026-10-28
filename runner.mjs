@@ -169,6 +169,11 @@ async function pump() {
   const { task, followUp } = job;
   const label = task.identifier || `#${task.id}`;
   try {
+    if (CFG.dryRun) {
+      // Leave the cap and handled state alone so the task still runs once DRY_RUN is off
+      log('info', 'dry run: would call claude', { task: label, followUp });
+      return;
+    }
     const day = today();
     const used = state.runsByDay[day] || 0;
     if (used >= CFG.maxRunsPerDay) {
@@ -182,12 +187,6 @@ async function pump() {
     saveState(state);
 
     log('info', 'running follow-up', { task: label });
-    if (CFG.dryRun) {
-      state.handled[task.id].status = 'dry-run';
-      saveState(state);
-      log('info', 'dry run: would call claude', { task: label, followUp });
-      return;
-    }
     const r = await runClaude(buildPrompt(task, followUp));
     const ok = r.code === 0 && r.result && !r.result.is_error;
     const cost = r.result?.total_cost_usd;

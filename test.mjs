@@ -62,5 +62,28 @@ const h = await (await fetch(`http://127.0.0.1:${PORT}/health`)).json();
 check('health endpoint', h.ok === true && h.runsToday === 2);
 
 child.kill();
+
+// Dry run: logs only, no claude call, no cap or handled state
+const tmp2 = fs.mkdtempSync(path.join(os.tmpdir(), 'fr-dry-'));
+const dry = spawn(process.execPath, [path.join(here, 'runner.mjs')], {
+  env: { ...process.env, LISTEN_HOST: '127.0.0.1', LISTEN_PORT: String(PORT + 1), WEBHOOK_SECRET: SECRET,
+    TASKS_MCP_TOKEN: '', OUTLINE_MCP_TOKEN: '', CLAUDE_BIN: fake, STATE_DIR: tmp2, MAX_RUNS_PER_DAY: '1', DRY_RUN: '1' },
+  stdio: ['ignore', 'pipe', 'pipe'],
+});
+let dryLogs = '';
+dry.stdout.on('data', d => dryLogs += d); dry.stderr.on('data', d => dryLogs += d);
+await sleep(500);
+for (const id of [11, 12]) {
+  const b = body({ id, done: true, description: desc('dry thing') });
+  await fetch(`http://127.0.0.1:${PORT + 1}/vikunja`, { method: 'POST', headers: { 'X-Vikunja-Signature': sign(b) }, body: b });
+}
+await sleep(800);
+dry.kill();
+const dryState = fs.existsSync(path.join(tmp2, 'state.json')) ? JSON.parse(fs.readFileSync(path.join(tmp2, 'state.json'), 'utf8')) : { handled: {} };
+const argsAfter = fs.existsSync(argsLog) ? fs.readFileSync(argsLog, 'utf8') : '';
+check('dry run: starts without tokens, logs both, no claude call',
+  (dryLogs.match(/dry run: would call claude/g) || []).length === 2 && !/daily cap reached/.test(dryLogs) && argsAfter === args);
+check('dry run: nothing marked handled', !dryState.handled[11] && !dryState.handled[12]);
+
 for (const [n, ok] of results) console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}`);
 if (results.some(r => !r[1])) { console.log('\n--- logs ---\n' + logs); process.exit(1); }
