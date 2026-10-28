@@ -1,0 +1,26 @@
+[Unit]
+Description=Vikunja follow-up runner (headless Claude)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=followup
+Group=followup
+WorkingDirectory=/opt/followup-runner
+EnvironmentFile=/opt/followup-runner/.env
+# Claude Code keeps its own files under $HOME; keep them in the state dir
+Environment=HOME=/var/lib/followup-runner
+ExecStart=/usr/bin/node /opt/followup-runner/runner.mjs
+Restart=on-failure
+RestartSec=10
+StateDirectory=followup-runner
+StateDirectoryMode=0700
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
