@@ -65,14 +65,17 @@ function verifySignature(raw, header) {
   return given.length === expected.length && crypto.timingSafeEqual(given, expected);
 }
 
+// Out-of-range entities (e.g. &#99999999;) would make fromCodePoint throw and crash the listener.
+const codePoint = (n, fallback) => (n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : fallback);
+
 function htmlToText(html) {
   return String(html || '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|h[1-6]|li|pre|blockquote)>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, n) => codePoint(Number(n), m))
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => codePoint(parseInt(h, 16), m))
     .replace(/&amp;/g, '&'); // last, so "&amp;lt;" stays "&lt;"
 }
 
