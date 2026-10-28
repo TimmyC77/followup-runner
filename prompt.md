@@ -15,7 +15,7 @@ Do this:
 4. Rules:
    - Do not delete anything (tasks, projects, labels, comments, documents, collections).
    - Do not change project sharing or permissions.
-   - Create a new project only when no existing project fits. List the projects first and reuse the closest match. Give a new project a short upper-case identifier. In your final comment, say it was created and that it needs a webhook before follow-ups will run in it.
+   - Create a new project only when no existing project fits. List the projects first and reuse the closest match. Create it with parent_project_id 12 (the "Homelab" parent project), which gives it the follow-up webhook and team sharing automatically. Give it a short upper-case identifier, and mention the new project in your final comment.
    - If the instruction needs anything you can't do with these tools, an irreversible change, or a decision only Tim can make: don't attempt it. Create a new task in the same project explaining what's needed (use the task template below), then finish.
    - Follow the Outline workspace AI guidance: publish directly with a "🟡 Needs review" line, never record secrets. Every Outline page you create or edit must get a dated change log line ending "– Claude (follow-up runner, {{TASK_IDENTIFIER}})". You share the Claude Outline account with interactive chats, so this line is how Tim tells your edits apart.
 5. If the work produces further work, create new tasks using the template.
