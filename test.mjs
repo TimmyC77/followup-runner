@@ -36,7 +36,7 @@ const check = (name, cond) => { results.push([name, !!cond]); };
 
 check('unsigned rejected', await post(body({ id: 1, done: true, description: desc('do x') }), null) === 401);
 check('bad signature rejected', await post(body({ id: 1, done: true, description: desc('do x') }), 'ab'.repeat(32)) === 401);
-check('signed accepted', await post(body({ id: 1, identifier: 'HA-9', title: 'T1', done: true, description: desc('Create a page') })) === 202);
+check('signed accepted', await post(body({ id: 1, identifier: 'HA-9', title: 'T1', done: true, description: desc('Create a page called &#34;Notes&#34; &amp;lt;b&amp;gt;') })) === 202);
 await post(body({ id: 2, done: false, description: desc('do y') }));
 await post(body({ id: 3, done: true, description: desc('none') }));
 await post(body({ id: 4, done: true, description: '<p>no section</p>' }));
@@ -56,6 +56,7 @@ check('not-done / none / no-section / wrong event ignored', !st.handled[2] && !s
 check('over daily cap not run and not marked handled', !st.handled[7] && /daily cap reached/.test(logs));
 check('locked-down flags passed', /^--tools\n\n/m.test(args) && /--permission-mode\ndontAsk/.test(args) && /--strict-mcp-config/.test(args) && /--restricted/.test(args) && /--max-budget-usd\n1.00/.test(args));
 check('prompt contains follow-up text', /Create a page/.test(args) && /HA-9/.test(args));
+check('HTML entities decoded once', args.includes('called "Notes" &lt;b&gt;'));
 const mcp = JSON.parse(fs.readFileSync(path.join(tmp, 'mcp.json'), 'utf8'));
 check('mcp.json has both servers, mode 600', mcp.mcpServers.tasks && mcp.mcpServers.outline && (fs.statSync(path.join(tmp, 'mcp.json')).mode & 0o777) === 0o600);
 const h = await (await fetch(`http://127.0.0.1:${PORT}/health`)).json();
